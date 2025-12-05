@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block Quest Game</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial Black', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    html {
+      height: 100%;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5%;
+      text-align: center;
+      color: white;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .mobile-frame {
+      max-width: 375px;
+      width: 100%;
+      height: 100%;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* Page 1 - Home Screen */
+    .home-title {
+      font-size: 48px;
+      margin-bottom: 20px;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+    }
+
+    .game-icon {
+      font-size: 120px;
+      margin: 30px 0;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .start-btn {
+      background: #ffd700;
+      color: #333;
+      border: none;
+      padding: 18px 60px;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #cc9900;
+      transition: all 0.2s;
+      margin-top: 30px;
+    }
+
+    .start-btn:hover {
+      background: #ffed4e;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 #cc9900;
+    }
+
+    .start-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 #cc9900;
+    }
+
+    /* Page 2 - Instructions */
+    .instructions-title {
+      font-size: 36px;
+      margin-bottom: 30px;
+    }
+
+    .instruction-item {
+      background: rgba(255,255,255,0.2);
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      text-align: left;
+    }
+
+    .instruction-icon {
+      font-size: 48px;
+      margin-right: 20px;
+      min-width: 60px;
+    }
+
+    .instruction-text {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .next-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 15px 50px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 30px;
+      box-shadow: 0 4px 0 #2e7d32;
+    }
+
+    .next-btn:hover {
+      background: #66BB6A;
+    }
+
+    /* Page 3 - Game Screen */
+    .game-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.3);
+      padding: 10px 20px;
+      border-radius: 20px;
+    }
+
+    .game-grid {
+      width: 90%;
+      max-width: 320px;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 20px auto;
+      padding: 15px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 15px;
+    }
+
+    .grid-cell {
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      transition: all 0.3s;
+    }
+
+    .grid-cell.player {
+      background: #4CAF50;
+      transform: scale(1.1);
+    }
+
+    .grid-cell.treasure {
+      background: rgba(255,215,0,0.4);
+    }
+
+    .grid-cell.enemy {
+      background: rgba(255,0,0,0.4);
+    }
+
+    .grid-cell.exit {
+      background: rgba(0,191,255,0.4);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 80%;
+      max-width: 280px;
+      margin: 20px auto;
+    }
+
+    .control-btn {
+      background: rgba(255,255,255,0.3);
+      border: 2px solid white;
+      color: white;
+      font-size: 32px;
+      padding: 20px;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: rgba(255,255,255,0.5);
+      transform: scale(1.05);
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+    }
+
+    .control-btn.empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+    }
+
+    /* Page 4 - Win Screen */
+    .result-icon {
+      font-size: 120px;
+      margin: 30px 0;
+    }
+
+    .result-title {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .result-stats {
+      background: rgba(255,255,255,0.2);
+      padding: 30px;
+      border-radius: 20px;
+      margin: 30px 0;
+      font-size: 20px;
+      line-height: 2;
+    }
+
+    .play-again-btn {
+      background: #ffd700;
+      color: #333;
+      border: none;
+      padding: 18px 50px;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #cc9900;
+      margin: 10px;
+    }
+
+    .play-again-btn:hover {
+      background: #ffed4e;
+    }
+
+    /* Page 5 - Lose Screen */
+    .lose-screen {
+      background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+    }
+
+    /* Navigation Controls */
+    .page-nav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      padding: 15px 25px;
+      border-radius: 30px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .nav-btn {
+      background: rgba(255,255,255,0.3);
+      border: 2px solid white;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.5);
+      transform: scale(1.1);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .page-indicator {
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .page-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .page-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      transition: all 0.3s;
+    }
+
+    .page-dot.active {
+      background: #ffd700;
+      transform: scale(1.3);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body><!-- Page Navigation Controls -->
+  <div class="page-nav"><button class="nav-btn" id="prev-btn" onclick="navigatePage(-1)">◀</button>
+   <div class="page-dots">
+    <div class="page-dot active" data-page="0"></div>
+    <div class="page-dot" data-page="1"></div>
+    <div class="page-dot" data-page="2"></div>
+    <div class="page-dot" data-page="3"></div>
+    <div class="page-dot" data-page="4"></div>
+   </div>
+   <div class="page-indicator" id="page-indicator">
+    1 / 5
+   </div><button class="nav-btn" id="next-btn" onclick="navigatePage(1)">▶</button>
+  </div>
+  <div class="mobile-frame"><!-- Page 1: Home Screen -->
+   <div id="home" class="screen active">
+    <h1 class="home-title" id="game-title">BLOCK QUEST</h1>
+    <div class="game-icon">
+     🎮
+    </div>
+    <p style="font-size: 18px; margin: 20px 0;">Navigate blocks, collect treasures, escape danger!</p><button class="start-btn" id="start-button" onclick="showScreen('instructions')">START GAME</button>
+   </div><!-- Page 2: Instructions -->
+   <div id="instructions" class="screen">
+    <h2 class="instructions-title" id="instructions-title">How to Play</h2>
+    <div class="instruction-item">
+     <div class="instruction-icon">
+      🟢
+     </div>
+     <div class="instruction-text">
+      Move the green block using arrow buttons to navigate the grid
+     </div>
+    </div>
+    <div class="instruction-item">
+     <div class="instruction-icon">
+      💎
+     </div>
+     <div class="instruction-text">
+      Collect all treasures to unlock the exit portal
+     </div>
+    </div>
+    <div class="instruction-item">
+     <div class="instruction-icon">
+      👾
+     </div>
+     <div class="instruction-text">
+      Avoid red enemies or you lose the game!
+     </div>
+    </div>
+    <div class="instruction-item">
+     <div class="instruction-icon">
+      🚪
+     </div>
+     <div class="instruction-text">
+      Reach the blue exit after collecting treasures to win
+     </div>
+    </div><button class="next-btn" onclick="showScreen('game')">LET'S GO!</button>
+   </div><!-- Page 3: Game Screen -->
+   <div id="game" class="screen">
+    <div class="game-header">
+     <div class="stat">
+      💎 <span id="treasure-count">0/3</span>
+     </div>
+     <div class="stat">
+      📍 Moves: <span id="move-count">0</span>
+     </div>
+    </div>
+    <div class="game-grid" id="game-grid"></div>
+    <div class="controls">
+     <div class="control-btn empty"></div><button class="control-btn" onclick="movePlayer('up')">⬆️</button>
+     <div class="control-btn empty"></div><button class="control-btn" onclick="movePlayer('left')">⬅️</button> <button class="control-btn" onclick="movePlayer('down')">⬇️</button> <button class="control-btn" onclick="movePlayer('right')">➡️</button>
+    </div>
+   </div><!-- Page 4: Win Screen -->
+   <div id="win" class="screen">
+    <div class="result-icon">
+     🏆
+    </div>
+    <h2 class="result-title" id="win-message">VICTORY!</h2>
+    <p style="font-size: 20px;">You escaped with all the treasures!</p>
+    <div class="result-stats">
+     <div>
+      💎 Treasures: <span id="final-treasures">3/3</span>
+     </div>
+     <div>
+      📍 Total Moves: <span id="final-moves">0</span>
+     </div>
+     <div>
+      ⭐ Rating: <span id="rating">Expert</span>
+     </div>
+    </div><button class="play-again-btn" onclick="resetGame()">PLAY AGAIN</button>
+   </div><!-- Page 5: Lose Screen -->
+   <div id="lose" class="screen lose-screen">
+    <div class="result-icon">
+     💥
+    </div>
+    <h2 class="result-title" id="lose-message">GAME OVER</h2>
+    <p style="font-size: 20px;">You hit an enemy block!</p>
+    <div class="result-stats">
+     <div>
+      💎 Treasures Collected: <span id="lose-treasures">0/3</span>
+     </div>
+     <div>
+      📍 Moves Made: <span id="lose-moves">0</span>
+     </div>
+    </div><button class="play-again-btn" onclick="resetGame()">TRY AGAIN</button>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      game_title: "BLOCK QUEST",
+      start_button_text: "START GAME",
+      instructions_title: "How to Play",
+      win_message: "VICTORY!",
+      lose_message: "GAME OVER"
+    };
+
+    const screens = ['home', 'instructions', 'game', 'win', 'lose'];
+    let currentScreenIndex = 0;
+
+    function navigatePage(direction) {
+      const newIndex = currentScreenIndex + direction;
+      if (newIndex >= 0 && newIndex < screens.length) {
+        currentScreenIndex = newIndex;
+        showScreenByIndex(currentScreenIndex);
+      }
+    }
+
+    function showScreenByIndex(index) {
+      currentScreenIndex = index;
+      const screenId = screens[index];
+      
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      
+      // Update navigation UI
+      document.getElementById('page-indicator').textContent = `${index + 1} / 5`;
+      
+      document.querySelectorAll('.page-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+      
+      document.getElementById('prev-btn').disabled = index === 0;
+      document.getElementById('next-btn').disabled = index === screens.length - 1;
+      
+      if (screenId === 'game') {
+        initGame();
+      }
+    }
+
+    let gameState = {
+      playerPos: { x: 0, y: 0 },
+      treasures: [
+        { x: 2, y: 1, collected: false },
+        { x: 4, y: 3, collected: false },
+        { x: 1, y: 4, collected: false }
+      ],
+      enemies: [
+        { x: 2, y: 2 },
+        { x: 3, y: 4 }
+      ],
+      exit: { x: 4, y: 4 },
+      moves: 0,
+      treasuresCollected: 0,
+      totalTreasures: 3
+    };
+
+    function showScreen(screenId) {
+      const index = screens.indexOf(screenId);
+      if (index !== -1) {
+        showScreenByIndex(index);
+      }
+    }
+
+    function initGame() {
+      const grid = document.getElementById('game-grid');
+      grid.innerHTML = '';
+      
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.x = x;
+          cell.dataset.y = y;
+          grid.appendChild(cell);
+        }
+      }
+      
+      updateGameDisplay();
+    }
+
+    function updateGameDisplay() {
+      document.querySelectorAll('.grid-cell').forEach(cell => {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        cell.className = 'grid-cell';
+        cell.textContent = '';
+        
+        if (x === gameState.playerPos.x && y === gameState.playerPos.y) {
+          cell.classList.add('player');
+          cell.textContent = '🟢';
+        }
+        
+        const treasure = gameState.treasures.find(t => t.x === x && t.y === y && !t.collected);
+        if (treasure) {
+          cell.classList.add('treasure');
+          cell.textContent = '💎';
+        }
+        
+        const enemy = gameState.enemies.find(e => e.x === x && e.y === y);
+        if (enemy) {
+          cell.classList.add('enemy');
+          cell.textContent = '👾';
+        }
+        
+        if (x === gameState.exit.x && y === gameState.exit.y) {
+          cell.classList.add('exit');
+          cell.textContent = '🚪';
+        }
+      });
+      
+      document.getElementById('treasure-count').textContent = 
+        `${gameState.treasuresCollected}/${gameState.totalTreasures}`;
+      document.getElementById('move-count').textContent = gameState.moves;
+    }
+
+    function movePlayer(direction) {
+      let newX = gameState.playerPos.x;
+      let newY = gameState.playerPos.y;
+      
+      switch(direction) {
+        case 'up': newY = Math.max(0, newY - 1); break;
+        case 'down': newY = Math.min(4, newY + 1); break;
+        case 'left': newX = Math.max(0, newX - 1); break;
+        case 'right': newX = Math.min(4, newX + 1); break;
+      }
+      
+      if (newX !== gameState.playerPos.x || newY !== gameState.playerPos.y) {
+        gameState.moves++;
+        gameState.playerPos.x = newX;
+        gameState.playerPos.y = newY;
+        
+        checkCollisions();
+        updateGameDisplay();
+      }
+    }
+
+    function checkCollisions() {
+      const treasure = gameState.treasures.find(
+        t => t.x === gameState.playerPos.x && t.y === gameState.playerPos.y && !t.collected
+      );
+      if (treasure) {
+        treasure.collected = true;
+        gameState.treasuresCollected++;
+      }
+      
+      const enemy = gameState.enemies.find(
+        e => e.x === gameState.playerPos.x && e.y === gameState.playerPos.y
+      );
+      if (enemy) {
+        endGame(false);
+        return;
+      }
+      
+      if (gameState.playerPos.x === gameState.exit.x && 
+          gameState.playerPos.y === gameState.exit.y &&
+          gameState.treasuresCollected === gameState.totalTreasures) {
+        endGame(true);
+      }
+    }
+
+    function endGame(won) {
+      if (won) {
+        document.getElementById('final-treasures').textContent = 
+          `${gameState.treasuresCollected}/${gameState.totalTreasures}`;
+        document.getElementById('final-moves').textContent = gameState.moves;
+        
+        let rating = 'Good';
+        if (gameState.moves <= 15) rating = 'Expert';
+        else if (gameState.moves <= 25) rating = 'Great';
+        document.getElementById('rating').textContent = rating;
+        
+        showScreen('win');
+      } else {
+        document.getElementById('lose-treasures').textContent = 
+          `${gameState.treasuresCollected}/${gameState.totalTreasures}`;
+        document.getElementById('lose-moves').textContent = gameState.moves;
+        showScreen('lose');
+      }
+    }
+
+    function resetGame() {
+      gameState = {
+        playerPos: { x: 0, y: 0 },
+        treasures: [
+          { x: 2, y: 1, collected: false },
+          { x: 4, y: 3, collected: false },
+          { x: 1, y: 4, collected: false }
+        ],
+        enemies: [
+          { x: 2, y: 2 },
+          { x: 3, y: 4 }
+        ],
+        exit: { x: 4, y: 4 },
+        moves: 0,
+        treasuresCollected: 0,
+        totalTreasures: 3
+      };
+      
+      showScreen('home');
+    }
+
+    async function onConfigChange(config) {
+      document.getElementById('game-title').textContent = config.game_title || defaultConfig.game_title;
+      document.getElementById('start-button').textContent = config.start_button_text || defaultConfig.start_button_text;
+      document.getElementById('instructions-title').textContent = config.instructions_title || defaultConfig.instructions_title;
+      document.getElementById('win-message').textContent = config.win_message || defaultConfig.win_message;
+      document.getElementById('lose-message').textContent = config.lose_message || defaultConfig.lose_message;
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["game_title", config.game_title || defaultConfig.game_title],
+          ["start_button_text", config.start_button_text || defaultConfig.start_button_text],
+          ["instructions_title", config.instructions_title || defaultConfig.instructions_title],
+          ["win_message", config.win_message || defaultConfig.win_message],
+          ["lose_message", config.lose_message || defaultConfig.lose_message]
+        ])
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a93608856136091',t:'MTc2NDkzNTk2My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
